@@ -43,7 +43,7 @@ func TestWAL(t *testing.T) {
 			return false
 		}
 
-		b, readErr := r.Read()
+		b, _, readErr := r.Read()
 		if !assert.NoError(t, readErr) {
 			return false
 		}
@@ -82,8 +82,10 @@ func TestWAL(t *testing.T) {
 	}
 	defer r.Close()
 
+	var offset Offset
 	for _, expected := range []string{"1", "2", "3"} {
-		b, err := r.Read()
+		var b []byte
+		b, offset, err = r.Read()
 		if !assert.NoError(t, err) {
 			return
 		}
@@ -93,7 +95,7 @@ func TestWAL(t *testing.T) {
 	}
 
 	// Truncate as of known offset, should not delete any files
-	testTruncate(t, wal, r.Offset(), 1)
+	testTruncate(t, wal, offset, 1)
 
 	// Truncate as of now, which should remove old log segment
 	testTruncate(t, wal, newOffset(time.Now().UnixNano(), 0), 0)

@@ -216,7 +216,7 @@ func (wal *WAL) NewReader(offset Offset) (*Reader, error) {
 	return r, nil
 }
 
-func (r *Reader) Read() ([]byte, error) {
+func (r *Reader) Read() ([]byte, Offset, error) {
 	// Read length
 	lenBuf := make([]byte, 4)
 	read := 0
@@ -236,7 +236,7 @@ func (r *Reader) Read() ([]byte, error) {
 	}
 
 	if length == 0 {
-		return nil, nil
+		return nil, nil, fmt.Errorf("No data")
 	}
 
 	// Read data
@@ -258,15 +258,11 @@ func (r *Reader) Read() ([]byte, error) {
 	if r.position >= maxSegmentSize {
 		err := r.advance()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	return b, nil
-}
-
-func (r *Reader) Offset() Offset {
-	return newOffset(r.fileSequence, r.position)
+	return b, newOffset(r.fileSequence, r.position), nil
 }
 
 func (r *Reader) Close() error {
